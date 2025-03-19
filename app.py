@@ -49,8 +49,10 @@ if selecao == "Cadastro Bulto":
         st.session_state["bulto_numero"] = ""
         st.session_state["bulto_cadastrado"] = False
 
+    if "credencial" not in st.session_state:
+        st.session_state["credencial"] = ""  # Initialize credencial
     if "peca" not in st.session_state:
-        st.session_state["peca"] = ""
+        st.session_state["peca"] = ""  # Initialize peca
 
     if not st.session_state["bulto_cadastrado"]:
         # Campo de entrada para o número do bulto
@@ -133,4 +135,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
