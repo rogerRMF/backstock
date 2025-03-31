@@ -6,12 +6,12 @@ import datetime
 from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
-
+from streamlit_gsheets import GSheetsConnection
 
 
 # Configuração da página para tela inteira
 st.set_page_config(layout="wide")
-
+conn = st.connection("gsheets", type=GSheetsConnection)
 # Página de boas-vindas
 if "inicio" not in st.session_state:
     st.session_state["inicio"] = False
