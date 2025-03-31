@@ -7,12 +7,30 @@ import datetime
 from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
-
-
+import json
 
 # Configuração da página para tela inteira
 st.set_page_config(layout="wide")
 
+# Autorizar acesso ao Google Sheets
+credenciais = None
+
+if "google" in st.secrets:  # Se estiver rodando no Streamlit Cloud
+    credenciais = pygsheets.authorize(custom_credentials=json.loads(st.secrets["google"]["service_account"]))
+else:  # Se estiver rodando localmente
+    cred_path = os.path.join(os.getcwd(), "cred.json")
+
+    if os.path.exists(cred_path):
+        credenciais = pygsheets.authorize(service_file=cred_path)
+    else:
+        st.error("Arquivo de credenciais `cred.json` não encontrado. Verifique o caminho ou configure `st.secrets`.")
+        st.stop()
+
+meuArquivoGoogleSheets = "https://docs.google.com/spreadsheets/d/1SFModXntK_P68nyofSYiB636eKG_uSZc_-f-mvWP1Yc/"
+arquivo = credenciais.open_by_url(meuArquivoGoogleSheets)
+aba = arquivo.worksheet_by_title("backstock")
+
+# O resto do seu código permanece inalterado...
 # Página de boas-vindas
 if "inicio" not in st.session_state:
     st.session_state["inicio"] = False
