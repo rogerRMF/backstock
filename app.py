@@ -8,8 +8,7 @@ from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
 
-# Establishing a Google Sheets connection
-conn = st.connection("gsheets", type=GSheetsConnection)
+
 
 # Configuração da página para tela inteira
 st.set_page_config(layout="wide")
