@@ -83,7 +83,8 @@ selecao = option_menu(
 
 
 # Autorizar acesso ao Google Sheets
-credenciais = pygsheets.authorize(service_file=os.path.join(os.getcwd(), "cred.json"))
+
+credenciais = pygsheets.authorize(service_file="cred.json")
 meuArquivoGoogleSheets = "https://docs.google.com/spreadsheets/d/1SFModXntK_P68nyofSYiB636eKG_uSZc_-f-mvWP1Yc/"
 arquivo = credenciais.open_by_url(meuArquivoGoogleSheets)
 aba = arquivo.worksheet_by_title("backstock")
