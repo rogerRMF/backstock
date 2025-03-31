@@ -6,9 +6,7 @@ import datetime
 from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
-import plotly.express as px 
-import altair as alt
-from PIL import Image
+
 
 
 # Configuração da página para tela inteira
