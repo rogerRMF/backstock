@@ -1,16 +1,18 @@
 import streamlit as st
 import pandas as pd
 import pygsheets
-from streamlit_gsheets import GSheetsConnection
 import os
 import datetime
 from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
-import json
-import streamlit as st
-import pygsheets
-import json
+import plotly.express as px 
+import altair as alt
+from PIL import Image
+
+
+# Configuração da página para tela inteira
+st.set_page_config(layout="wide")
 
 # Página de boas-vindas
 if "inicio" not in st.session_state:
@@ -75,7 +77,7 @@ if not st.session_state["user"]:
 )
 selecao = option_menu(
     menu_title="BACKSTOCK",
-    options=["Cadastro Bulto", "Tabela", "Home"],
+    options=["Cadastro Bulto", "Tabela", "Dashboard", "Home"],
     icons=["box", "table", "dash", "house"],
     menu_icon="cast",
     orientation="horizontal"
@@ -329,3 +331,82 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+ 
+if selecao == "Dashboard":
+    st.title("Dashboard de Bultos")   
+    # --- Criar sidebar
+    with st.sidebar:
+        st.subheader("Menu - Dashboard de  Bultos")
+        fUsuario = st.selectbox(
+            "Selecione o usuário:",
+            options=df["Usuario"].unique()
+        )        
+        fBulto = st.selectbox(
+            "Selecione o bulto:",
+            options=df["Bulto"].unique()
+        )
+        fCategoria = st.selectbox(
+           "Selecione a categoria:",
+           options=df["Categoria"].unique()
+    )
+        
+    # Tabela qtde por bulto
+    tab1_qtd_bulto = df.loc[(
+        df['Usuario'] == fUsuario) &
+        (df['Categoria'] == fCategoria) 
+    ]
+    
+    tab1_qtd_bulto = tab1_qtd_bulto.reset_index()
+    
+    # Tabela de Margem
+    tab2_usuario_margem = df.loc[(
+        df['Usuario'] == fUsuario) &
+        (df['Bulto'] == fBulto) &
+        (df['Categoria'] == fCategoria)
+    ]
+    tab3_Usuario = df.loc[(
+        df['Categoria'] == fCategoria) &
+        (df['Bulto'] == fBulto)
+    ]
+    tab3_Usuario = tab3_Usuario.reset_index()
+    tab3_Usuario = tab3_Usuario.drop(columns=["index","SKU", "Data"])
+    
+    tab4_Categoria = df.loc[(
+        df['Categoria'] == fCategoria) &
+        (df['Usuario'] == fUsuario)
+    ]
+    
+    tab4_Categoria = tab4_Categoria.reset_index()
+    
+    # Mensais
+    tab5_mensais = df.loc[(
+        df['Usuario'] == fUsuario) &
+        (df['Bulto'] == fBulto) &
+        (df['Categoria'] == fCategoria)
+    ]
+    # Converte a coluna 'Data' para datetime
+    tab5_mensais['Data'] = pd.to_datetime(tab5_mensais['Data'], errors='coerce')
+
+# Agora, aplique o formato desejado
+    tab5_mensais['mm'] = tab5_mensais['Data'].dt.strftime('%m/%Y')
+
+    tab5_mensais['mm'] = tab5_mensais['Data'].dt.strftime('%m/%Y')
+    
+    
+    ######Padroes ########
+    cor_grafico = "#9DD1F1"
+    cor_fundo = "#F0F2F5"
+    cor_texto = "#000000"
+    
+    #Grafico 1 - Quantidade por Bulto
+    graf1_qtd_bulto = alt.Chart(tab1_qtd_bulto).mark_bar(
+        color= cor_grafico,
+        cornerRadiusTopLeft=9,
+        cornerRadiusTopRight=9,
+        ).encode(
+            x = 'Bulto',
+            y = 'Usuario',
+            tooltip=['Bulto', 'Usuario']
+        ).properties(title="Quantidade por Bulto"
+        ).configure_axis(grid=False).configure_view(strokeWidth=0)
+    graf1_qtd_bulto
