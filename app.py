@@ -12,29 +12,6 @@ import streamlit as st
 import pygsheets
 import json
 
-# Verificar se o Streamlit tem as credenciais carregadas
-if "google" not in st.secrets:
-    st.error("🚨 Credenciais do Google não encontradas! Verifique o secrets.toml.")
-    st.stop()
-
-# Criar credenciais com os dados do Streamlit Secrets
-credenciais = {
-    "type": st.secrets["google"]["type"],
-    "project_id": st.secrets["google"]["project_id"],
-    "private_key_id": st.secrets["google"]["private_key_id"],
-    "private_key": st.secrets["google"]["private_key"].replace(" ", "\n"),  # Corrigir o formato da chave
-    "client_email": st.secrets["google"]["client_email"],
-    "client_id": st.secrets["google"]["client_id"],
-    "auth_uri": st.secrets["google"]["auth_uri"],
-    "token_uri": st.secrets["google"]["token_uri"],
-    "auth_provider_x509_cert_url": st.secrets["google"]["auth_provider_x509_cert_url"],
-    "client_x509_cert_url": st.secrets["google"]["client_x509_cert_url"],
-}
-
-
-
-
-
 # Página de boas-vindas
 if "inicio" not in st.session_state:
     st.session_state["inicio"] = False
