@@ -8,29 +8,33 @@ from streamlit_option_menu import option_menu
 from streamlit_javascript import st_javascript
 from datetime import datetime 
 import json
+import streamlit as st
+import pygsheets
+import json
 
-# Configuração da página para tela inteira
-st.set_page_config(layout="wide")
+# Verificar se o Streamlit tem as credenciais carregadas
+if "google" not in st.secrets:
+    st.error("🚨 Credenciais do Google não encontradas! Verifique o secrets.toml.")
+    st.stop()
 
-# Autorizar acesso ao Google Sheets
-credenciais = None
+# Criar credenciais com os dados do Streamlit Secrets
+credenciais = {
+    "type": st.secrets["google"]["type"],
+    "project_id": st.secrets["google"]["project_id"],
+    "private_key_id": st.secrets["google"]["private_key_id"],
+    "private_key": st.secrets["google"]["private_key"].replace(" ", "\n"),  # Corrigir o formato da chave
+    "client_email": st.secrets["google"]["client_email"],
+    "client_id": st.secrets["google"]["client_id"],
+    "auth_uri": st.secrets["google"]["auth_uri"],
+    "token_uri": st.secrets["google"]["token_uri"],
+    "auth_provider_x509_cert_url": st.secrets["google"]["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": st.secrets["google"]["client_x509_cert_url"],
+}
 
-if "google" in st.secrets:  # Se estiver rodando no Streamlit Cloud
-    credenciais = pygsheets.authorize(custom_credentials=json.loads(st.secrets["google"]["service_account"]))
-else:  # Se estiver rodando localmente
-    cred_path = os.path.join(os.getcwd(), "cred.json")
 
-    if os.path.exists(cred_path):
-        credenciais = pygsheets.authorize(service_file=cred_path)
-    else:
-        st.error("Arquivo de credenciais `cred.json` não encontrado. Verifique o caminho ou configure `st.secrets`.")
-        st.stop()
 
-meuArquivoGoogleSheets = "https://docs.google.com/spreadsheets/d/1SFModXntK_P68nyofSYiB636eKG_uSZc_-f-mvWP1Yc/"
-arquivo = credenciais.open_by_url(meuArquivoGoogleSheets)
-aba = arquivo.worksheet_by_title("backstock")
 
-# O resto do seu código permanece inalterado...
+
 # Página de boas-vindas
 if "inicio" not in st.session_state:
     st.session_state["inicio"] = False
