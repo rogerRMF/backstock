@@ -10,6 +10,7 @@ import io
 import smtplib
 from email.message import EmailMessage
 
+
 # Configuração da página para tela inteira
 st.set_page_config(layout="wide")
 
