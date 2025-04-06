@@ -1,86 +1,288 @@
 import streamlit as st
 import pandas as pd
+import pygsheets
+import os
 import datetime
 from streamlit_option_menu import option_menu
-import urllib.parse
+from streamlit_javascript import st_javascript
+from datetime import datetime
+import io
+import smtplib
+from email.message import EmailMessage
 
-# Configuração da página
+# Configuração da página para tela inteira
 st.set_page_config(layout="wide")
 
-# Inicializar session_state para controle de dados
-if "dados" not in st.session_state:
-    st.session_state["dados"] = pd.DataFrame(columns=["Bulto", "Sku", "Categoria", "Data/Hora", "Usuario"])
+# Página de boas-vindas
 if "inicio" not in st.session_state:
     st.session_state["inicio"] = False
-if "user" not in st.session_state:
-    st.session_state["user"] = ""
 
-# Página de boas-vindas
 if not st.session_state["inicio"]:
     st.title("SISTEMA DE CONTROLE DE BACKSTOCK")
     if st.button("Iniciar"):
+        with st.spinner("Carregando o sistema..."):
+            import time
+            time.sleep(5)
+        st.success("Sistema carregado com sucesso! Vamos para a tela de usuário.")
+        time.sleep(3)
         st.session_state["inicio"] = True
         st.rerun()
+
+    st.image("https://f.hellowork.com/media/123957/1440_960/IDLOGISTICSFRANCE_123957_63809226079153822430064462.jpeg", use_container_width=True)
     st.stop()
 
-# Cadastro de usuário
+# Inicializar session_state para controle do usuário
+if "user" not in st.session_state or not st.session_state["user"]:
+    st.session_state["user"] = ""
+
+# Página de cadastro obrigatório do usuário antes de acessar o sistema
 if not st.session_state["user"]:
-    st.title("Cadastro Obrigatório")
+    st.title("Cadastro Obrigatório para continuar o acesso")
+    st.markdown(
+        """
+        <style>
+        input {
+            color: black !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     user = st.text_input("Digite seu usuário:")
+    st.write(f"Usuário digitado: {user}")
+
     if user.strip():
         st.session_state["user"] = user.strip()
         st.success(f"Usuário {user} cadastrado com sucesso!")
         st.rerun()
+    else:
+        st.warning("Por favor, digite um nome de usuário válido.")
+
+    st.image("https://f.hellowork.com/media/123957/1440_960/IDLOGISTICSFRANCE_123957_63809226079153822430064462.jpeg", use_container_width=True)
     st.stop()
 
 # Menu de navegação
+st.markdown(
+    """
+    <style>
+       .css-1omjdxh {
+          color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 selecao = option_menu(
     menu_title="BACKSTOCK",
-    options=["Cadastro Bulto", "Tabela", "Enviar WhatsApp", "Home"],
-    icons=["box", "table", "whatsapp", "house"],
+    options=["Cadastro Bulto", "Tabela", "Home"],
+    icons=["box", "table", "house"],
     menu_icon="cast",
     orientation="horizontal"
 )
-
-# Cadastro de Bulto
-if selecao == "Cadastro Bulto":
-    st.title("Cadastro de Bultos")
-    bulto = st.number_input("Digite o número do bulto:", min_value=1, step=1)
-    sku = st.text_input("Digite SKU para este bulto:")
-    categorias = ["Ubicação", "Limpeza", "Tara Maior", "Costura", "Reetiquetagem"]
-    categoria = st.selectbox("Escolha uma categoria:", categorias)
-    
-    if st.button("Cadastrar Peça"):
-        if bulto and sku and categoria:
-            nova_linha = pd.DataFrame({
-                "Bulto": [bulto],
-                "Sku": [sku],
-                "Categoria": [categoria],
-                "Data/Hora": [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-                "Usuario": [st.session_state["user"]]
-            })
-            st.session_state["dados"] = pd.concat([st.session_state["dados"], nova_linha], ignore_index=True)
-            st.success("Peça cadastrada com sucesso!")
-        else:
-            st.warning("Preencha todos os campos antes de cadastrar.")
-
-elif selecao == "Tabela":
-    st.title("Tabela de Dados")
-    st.dataframe(st.session_state["dados"])
-
-elif selecao == "Enviar WhatsApp":
-    st.title("Enviar Dados via WhatsApp")
-    if not st.session_state["dados"].empty:
-        numero = st.text_input("Digite o número do WhatsApp (com DDD e sem espaços):")
-        if st.button("Enviar") and numero:
-            tabela = st.session_state["dados"].to_string(index=False)
-            mensagem = f"Dados do Backstock:\n{tabela}"
-            url = f"https://api.whatsapp.com/send?phone={numero}&text={urllib.parse.quote(mensagem)}"
-            st.markdown(f"[Clique aqui para enviar pelo WhatsApp]({url})", unsafe_allow_html=True)
-    else:
-        st.warning("Nenhum dado para enviar.")
-
-elif selecao == "Home":
+# Redirecionar para a tela de início ao clicar em "Home"
+if selecao == "Home":
     st.session_state["inicio"] = False
     st.session_state["user"] = ""
+    st.session_state["bulto_cadastrado"] = False
     st.rerun()
+
+if selecao == "Cadastro Bulto":
+    st.markdown("<h1 style='color:black;'>Cadastro de Bultos</h1>", unsafe_allow_html=True)
+
+    if "bulto_numero" not in st.session_state:
+        st.session_state["bulto_numero"] = ""
+        st.session_state["bulto_cadastrado"] = False
+    if "peca" not in st.session_state:
+        st.session_state["peca"] = ""
+
+    if not st.session_state["bulto_cadastrado"]:
+        st.markdown("""
+            <style>
+                input {
+                    color: black !important;
+                }
+                ::placeholder {
+                    color: lightgray !important;
+                }
+                label {
+                    color: black !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+        bulto = st.number_input("Digite o número do bulto:", min_value=0, step=1, format="%d")
+        if bulto:
+            st.session_state["bulto_numero"] = bulto
+            st.session_state["bulto_cadastrado"] = True
+            st.rerun()
+    else:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"<p style='font-size:25px; color:black;'><b>User:</b> <span style='color:dimgray;'>{st.session_state['user']}</span></p>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"<p style='font-size:25px; color:black;'><b>Bulto:</b> <span style='color:dimgray;'>{st.session_state['bulto_numero']}</span></p>", unsafe_allow_html=True)
+        with col3:
+            total_sku_local = st.session_state.get("peca_reset_count", 0)
+            st.markdown(f"<p style='font-size:25px; color:black;'><b>SKU:</b> <span style='color:dimgray;'> {total_sku_local}</p>", unsafe_allow_html=True)
+
+        unique_key = f"peca_{st.session_state.get('peca_reset_count', 0)}"
+
+        st.markdown("""
+            <style>
+                ::placeholder {
+                    color: black !important;
+                }
+                .stTextInput > div > div > input {
+                    color: black !important;
+                }
+                label {
+                    color: black !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        sku = st.text_input("Digite SKU para este bulto:", key=unique_key)
+
+        categorias = ["Ubicação", "Limpeza", "Tara Maior", "Costura", "Reetiquetagem"]
+
+        if "categoria_selecionada" not in st.session_state:
+            st.session_state["categoria_selecionada"] = None
+
+        st.markdown("<h3 style='color:white;'>Escolha uma categoria:</h3>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns(3)
+
+        for i, categoria in enumerate(categorias):
+            if (i % 3) == 0:
+                with col1:
+                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
+                        st.session_state["categoria_selecionada"] = categoria
+                        st.success(f"Categoria '{categoria}' selecionada!")
+            elif (i % 3) == 1:
+                with col2:
+                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
+                        st.session_state["categoria_selecionada"] = categoria
+                        st.success(f"Categoria '{categoria}' selecionada!")
+            else:
+                with col3:
+                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
+                        st.session_state["categoria_selecionada"] = categoria
+                        st.success(f"Categoria '{categoria}' selecionada!")
+
+        st_javascript("""
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('input[type="text"]');
+                if (inputs.length > 0) {
+                    inputs[inputs.length - 1].focus();
+                }
+            }, 100);
+        """)
+
+        col1, col2 = st.columns(2)
+
+        if st.session_state.get("categoria_selecionada"):
+            st.success(f"Categoria '{st.session_state['categoria_selecionada']}' selecionada!")
+
+        if "cadastros" not in st.session_state:
+            st.session_state["cadastros"] = []
+
+        with col1:
+            if st.button("Cadastrar Peça"):
+                if not st.session_state.get("bulto_numero"):
+                    st.warning("Cadastre um bulto antes de cadastrar uma peça.")
+                elif not st.session_state.get("categoria_selecionada"):
+                    st.warning("Selecione uma categoria antes de cadastrar a peça.")
+                elif not sku:
+                    st.warning("Preencha o campo de SKU antes de cadastrar a peça.")
+                else:
+                    duplicado = any(
+                        cadastro["SKU"] == sku and cadastro["Bulto"] == st.session_state["bulto_numero"]
+                        for cadastro in st.session_state["cadastros"]
+                    )
+
+                    if duplicado:
+                        st.error(f"O SKU '{sku}' já está cadastrado para o Bulto {st.session_state['bulto_numero']}.")
+                    else:
+                        novo_cadastro = {
+                            "Usuário": st.session_state["user"],
+                            "Bulto": st.session_state["bulto_numero"],
+                            "SKU": sku,
+                            "Categoria": st.session_state["categoria_selecionada"],
+                            "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                        }
+                        st.session_state["cadastros"].append(novo_cadastro)
+                        st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state['categoria_selecionada']}'!")
+                        st.session_state["peca_reset_count"] = st.session_state.get("peca_reset_count", 0) + 1
+                        st.rerun()
+
+        with col2:
+            if st.button("Finalizar Bulto"):
+                st.success("Bulto finalizado com sucesso!")
+                st.session_state["bulto_numero"] = ""
+                st.session_state["bulto_cadastrado"] = False
+                st.session_state["peca_reset_count"] = 0
+                st.rerun()
+
+elif selecao == "Tabela":
+    st.markdown("<h1 style='color:black;'>Tabela de Peças Cadastradas</h1>", unsafe_allow_html=True)
+    if "cadastros" in st.session_state and st.session_state["cadastros"]:
+        df_cadastros = pd.DataFrame(st.session_state["cadastros"])
+        st.dataframe(df_cadastros, use_container_width=True)
+
+        nome_arquivo = f"cadastro_bultos_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.xlsx"
+        output = io.BytesIO()
+        df_cadastros.to_excel(output, index=False, engine='xlsxwriter')
+        dados_excel = output.getvalue()
+
+        st.download_button(
+            label="📥 Baixar planilha Excel",
+            data=dados_excel,
+            file_name=nome_arquivo,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        if st.button("✉️ Enviar planilha para analista"):
+            try:
+                remetente = "rogeriomartins1206@gmail.com"
+                senha = "zqcpbmisdghscjcv"
+                destinatario = "analista@empresa.com"
+
+                msg = EmailMessage()
+                msg['Subject'] = 'Relatório de Cadastro de Bultos'
+                msg['From'] = remetente
+                msg['To'] = destinatario
+                msg.set_content('Segue em anexo a planilha de cadastro de bultos.')
+                msg.add_attachment(dados_excel, maintype='application', subtype='vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename=nome_arquivo)
+
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                    smtp.login(remetente, senha)
+                    smtp.send_message(msg)
+
+                st.success("✅ Planilha enviada com sucesso para o analista!")
+
+            except Exception as e:
+                st.error(f"❌ Erro ao enviar planilha: {e}")
+    else:
+        st.info("Nenhuma peça cadastrada até o momento.")
+
+# Rodapé
+st.markdown(
+    """
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            right: 10px;
+            font-size: 12px;
+            text-align: right;
+            background-color: #9DD1F1;
+            color: black;
+            padding: 5px;
+            z-index: 100;
+        }
+    </style>
+    <div class="footer">
+        Copyright © 2025 Direitos Autorais Desenvolvedor Rogério Ferreira
+    </div>
+    """,
+    unsafe_allow_html=True
+)
