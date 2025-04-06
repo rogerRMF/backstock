@@ -4,4 +4,6 @@ streamlit
 pandas
 streamlit-javascript
 st-gsheets-connection
-
+firebase-admin
+XlsxWriter
+openpyxlclear
