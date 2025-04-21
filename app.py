@@ -10,6 +10,8 @@ import io
 import smtplib
 from email.message import EmailMessage
 
+if "cadastros" not in st.session_state:
+    st.session_state["cadastros"] = []
 
 # Configuração da página para tela inteira
 st.set_page_config(layout="wide")
