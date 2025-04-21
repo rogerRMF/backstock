@@ -142,7 +142,7 @@ if selecao == "Cadastro Bulto":
             </style>
         """, unsafe_allow_html=True)
 
-        sku = st.text_input("Digite SKU para este bulto:", key=unique_key)
+        
 
         categorias = ["Ubicação", "Limpeza", "Tara Maior", "Costura", "Reetiquetagem"]
 
@@ -177,43 +177,32 @@ if selecao == "Cadastro Bulto":
                 }
             }, 100);
         """)
+        # Campo de entrada de SKU com monitoramento automático
+        sku = st.text_input("Digite SKU para este bulto:", key=unique_key)
 
-        col1, col2 = st.columns(2)
+        if "ultimo_sku" not in st.session_state:
+            st.session_state["ultimo_sku"] = ""
 
-        if st.session_state.get("categoria_selecionada"):
-            st.success(f"Categoria '{st.session_state['categoria_selecionada']}' selecionada!")
+# Quando SKU é inserido e for diferente do último cadastrado
+        if sku and sku != st.session_state["ultimo_sku"]:
+            if not st.session_state.get("bulto_numero"):
+                st.warning("Cadastre um bulto antes de cadastrar uma peça.")
+            elif not st.session_state.get("categoria_selecionada"):
+                st.warning("Selecione uma categoria antes de cadastrar a peça.")
+            else:
+                 novo_cadastro = {
+                    "Usuário": st.session_state["user"],
+                    "Bulto": st.session_state["bulto_numero"],
+                    "SKU": sku,
+                    "Categoria": st.session_state["categoria_selecionada"],
+                   "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                }
+            st.session_state["cadastros"].append(novo_cadastro)
+            st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state       ['categoria_selecionada']}'!")
+            st.session_state["peca_reset_count"] = st.session_state.get("peca_reset_count", 0) + 1
+            st.session_state["ultimo_sku"] = sku
+            st.rerun()
 
-        if "cadastros" not in st.session_state:
-            st.session_state["cadastros"] = []
-
-        with col1:
-            if st.button("Cadastrar Peça"):
-                if not st.session_state.get("bulto_numero"):
-                    st.warning("Cadastre um bulto antes de cadastrar uma peça.")
-                elif not st.session_state.get("categoria_selecionada"):
-                    st.warning("Selecione uma categoria antes de cadastrar a peça.")
-                elif not sku:
-                    st.warning("Preencha o campo de SKU antes de cadastrar a peça.")
-                else:
-                    duplicado = any(
-                        cadastro["SKU"] == sku and cadastro["Bulto"] == st.session_state["bulto_numero"]
-                        for cadastro in st.session_state["cadastros"]
-                    )
-
-                    if duplicado:
-                        st.error(f"O SKU '{sku}' já está cadastrado para o Bulto {st.session_state['bulto_numero']}.")
-                    else:
-                        novo_cadastro = {
-                            "Usuário": st.session_state["user"],
-                            "Bulto": st.session_state["bulto_numero"],
-                            "SKU": sku,
-                            "Categoria": st.session_state["categoria_selecionada"],
-                            "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                        }
-                        st.session_state["cadastros"].append(novo_cadastro)
-                        st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state['categoria_selecionada']}'!")
-                        st.session_state["peca_reset_count"] = st.session_state.get("peca_reset_count", 0) + 1
-                        st.rerun()
 
         with col2:
             if st.button("Finalizar Bulto"):
