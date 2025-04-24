@@ -105,7 +105,7 @@ if selecao == "Cadastro Bulto":
             </style>
         """, unsafe_allow_html=True)
 
-        bulto = st.text_input("Digite o número do bulto:")
+        bulto = st.text_input("Digite o número do bulto2:")
         if bulto:
             st.session_state["bulto_numero"] = bulto
             st.session_state["bulto_cadastrado"] = True
