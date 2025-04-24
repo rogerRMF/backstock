@@ -173,13 +173,14 @@ if selecao == "Cadastro Bulto":
                 st.session_state["ultimo_sku"] = sku
                 st.rerun()
 
-        with col2:
-            if st.button("Finalizar Bulto"):
-                st.success("Bulto finalizado com sucesso!")
-                st.session_state["bulto_numero"] = ""
-                st.session_state["bulto_cadastrado"] = False
-                st.session_state["peca_reset_count"] = 0
-                st.rerun()
+        st.markdown("---")  # linha de separação opcional
+        if st.button("✅ Finalizar Bulto", use_container_width=True):
+           st.success("Bulto finalizado com sucesso!")
+           st.session_state["bulto_numero"] = ""
+           st.session_state["bulto_cadastrado"] = False
+           st.session_state["peca_reset_count"] = 0
+           st.rerun()
+
 
 # Tabela de peças cadastradas
 elif selecao == "Tabela":
