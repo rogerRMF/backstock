@@ -9,6 +9,11 @@ from datetime import datetime
 import io
 import smtplib
 from email.message import EmailMessage
+from datetime import datetime
+import pytz
+def hora_brasil():
+    fuso_brasil = pytz.timezone('America/Sao_Paulo')
+    return datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
 
 # Inicializar session_state
 if "cadastros" not in st.session_state:
@@ -153,14 +158,14 @@ if selecao == "Cadastro Bulto":
             elif not st.session_state.get("categoria_selecionada"):
                 st.warning("Selecione uma categoria antes de cadastrar a peça.")
             else:
-                horario_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+               # horario_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 
                 novo_cadastro = {
                     "Usuário": st.session_state["user"],
                     "Bulto": st.session_state["bulto_numero"],
                     "SKU": sku,
                     "Categoria": st.session_state["categoria_selecionada"],
-                    "Data/Hora": horario_atual
+                    "Data/Hora": hora_brasil()
                 }
                 st.session_state["cadastros"].append(novo_cadastro)
                 st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state['categoria_selecionada']}'!")
@@ -183,8 +188,9 @@ elif selecao == "Tabela":
     if st.session_state["cadastros"]:
         df_cadastros = pd.DataFrame(st.session_state["cadastros"])
         st.dataframe(df_cadastros, use_container_width=True)
+        nome_arquivo = f"cadastro_bultos_{datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%d-%m-%Y_%H-%M-%S')}.xlsx"
 
-        nome_arquivo = f"cadastro_bultos_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.xlsx"
+       # nome_arquivo = f"cadastro_bultos_{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.xlsx"
         output = io.BytesIO()
         df_cadastros.to_excel(output, index=False, engine='xlsxwriter')
         dados_excel = output.getvalue()
