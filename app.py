@@ -105,7 +105,7 @@ if selecao == "Cadastro Bulto":
             </style>
         """, unsafe_allow_html=True)
 
-        bulto = st.text_input("Digite o número do bulto2:")
+        bulto = st.text_input("Digite o número do bulto:")
         if bulto:
             st.session_state["bulto_numero"] = bulto
             st.session_state["bulto_cadastrado"] = True
@@ -153,12 +153,14 @@ if selecao == "Cadastro Bulto":
             elif not st.session_state.get("categoria_selecionada"):
                 st.warning("Selecione uma categoria antes de cadastrar a peça.")
             else:
+                horario_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                
                 novo_cadastro = {
                     "Usuário": st.session_state["user"],
                     "Bulto": st.session_state["bulto_numero"],
                     "SKU": sku,
                     "Categoria": st.session_state["categoria_selecionada"],
-                    "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    "Data/Hora": horario_atual
                 }
                 st.session_state["cadastros"].append(novo_cadastro)
                 st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state['categoria_selecionada']}'!")
