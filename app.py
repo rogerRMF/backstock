@@ -10,10 +10,11 @@ import io
 import smtplib
 from email.message import EmailMessage
 
+# Inicializar session_state
 if "cadastros" not in st.session_state:
     st.session_state["cadastros"] = []
 
-# Configuração da página para tela inteira
+# Configuração da página
 st.set_page_config(layout="wide")
 
 # Página de boas-vindas
@@ -34,23 +35,19 @@ if not st.session_state["inicio"]:
     st.image("https://f.hellowork.com/media/123957/1440_960/IDLOGISTICSFRANCE_123957_63809226079153822430064462.jpeg", use_container_width=True)
     st.stop()
 
-# Inicializar session_state para controle do usuário
+# Cadastro obrigatório do usuário
 if "user" not in st.session_state or not st.session_state["user"]:
     st.session_state["user"] = ""
 
-# Página de cadastro obrigatório do usuário antes de acessar o sistema
 if not st.session_state["user"]:
     st.title("Cadastro Obrigatório para continuar o acesso")
-    st.markdown(
-        """
+    st.markdown("""
         <style>
         input {
             color: black !important;
         }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
     user = st.text_input("Digite seu usuário:")
     st.write(f"Usuário digitado: {user}")
@@ -66,16 +63,14 @@ if not st.session_state["user"]:
     st.stop()
 
 # Menu de navegação
-st.markdown(
-    """
+st.markdown("""
     <style>
-       .css-1omjdxh {
-          color: white !important;
-    }
+        .css-1omjdxh {
+            color: white !important;
+        }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
+
 selecao = option_menu(
     menu_title="BACKSTOCK",
     options=["Cadastro Bulto", "Tabela", "Home"],
@@ -83,13 +78,15 @@ selecao = option_menu(
     menu_icon="cast",
     orientation="horizontal"
 )
-# Redirecionar para a tela de início ao clicar em "Home"
+
+# Redireciona para tela de boas-vindas
 if selecao == "Home":
     st.session_state["inicio"] = False
     st.session_state["user"] = ""
     st.session_state["bulto_cadastrado"] = False
     st.rerun()
 
+# Página de cadastro de bultos
 if selecao == "Cadastro Bulto":
     st.markdown("<h1 style='color:black;'>Cadastro de Bultos</h1>", unsafe_allow_html=True)
 
@@ -102,18 +99,13 @@ if selecao == "Cadastro Bulto":
     if not st.session_state["bulto_cadastrado"]:
         st.markdown("""
             <style>
-                input {
-                    color: black !important;
-                }
-                ::placeholder {
-                    color: lightgray !important;
-                }
-                label {
-                    color: black !important;
-                }
+                input { color: black !important; }
+                ::placeholder { color: lightgray !important; }
+                label { color: black !important; }
             </style>
         """, unsafe_allow_html=True)
-        bulto = st.number_input("Digite o número do bulto:", min_value=0, step=1, format="%d")
+
+        bulto = st.text_input("Digite o número do bulto:")
         if bulto:
             st.session_state["bulto_numero"] = bulto
             st.session_state["bulto_cadastrado"] = True
@@ -132,79 +124,47 @@ if selecao == "Cadastro Bulto":
 
         st.markdown("""
             <style>
-                ::placeholder {
-                    color: black !important;
-                }
-                .stTextInput > div > div > input {
-                    color: black !important;
-                }
-                label {
-                    color: black !important;
-                }
+                ::placeholder { color: black !important; }
+                .stTextInput > div > div > input { color: black !important; }
+                label { color: black !important; }
             </style>
         """, unsafe_allow_html=True)
 
-        
-
         categorias = ["Ubicação", "Limpeza", "Tara Maior", "Costura", "Reetiquetagem"]
-
         if "categoria_selecionada" not in st.session_state:
             st.session_state["categoria_selecionada"] = None
 
         st.markdown("<h3 style='color:white;'>Escolha uma categoria:</h3>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
-
         for i, categoria in enumerate(categorias):
-            if (i % 3) == 0:
-                with col1:
-                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
-                        st.session_state["categoria_selecionada"] = categoria
-                        st.success(f"Categoria '{categoria}' selecionada!")
-            elif (i % 3) == 1:
-                with col2:
-                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
-                        st.session_state["categoria_selecionada"] = categoria
-                        st.success(f"Categoria '{categoria}' selecionada!")
-            else:
-                with col3:
-                    if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
-                        st.session_state["categoria_selecionada"] = categoria
-                        st.success(f"Categoria '{categoria}' selecionada!")
+            col = [col1, col2, col3][i % 3]
+            with col:
+                if st.button(categoria, key=f"btn_{categoria}", help=f"Selecionar {categoria}", use_container_width=True):
+                    st.session_state["categoria_selecionada"] = categoria
+                    st.success(f"Categoria '{categoria}' selecionada!")
 
-        st_javascript("""
-            setTimeout(() => {
-                const inputs = document.querySelectorAll('input[type="text"]');
-                if (inputs.length > 0) {
-                    inputs[inputs.length - 1].focus();
-                }
-            }, 100);
-        """)
-        # Campo de entrada de SKU com monitoramento automático
         sku = st.text_input("Digite SKU para este bulto:", key=unique_key)
-
         if "ultimo_sku" not in st.session_state:
             st.session_state["ultimo_sku"] = ""
 
-# Quando SKU é inserido e for diferente do último cadastrado
-        if sku and sku != st.session_state["ultimo_sku"]:
+        if sku:
             if not st.session_state.get("bulto_numero"):
                 st.warning("Cadastre um bulto antes de cadastrar uma peça.")
             elif not st.session_state.get("categoria_selecionada"):
                 st.warning("Selecione uma categoria antes de cadastrar a peça.")
             else:
-                 novo_cadastro = {
+                novo_cadastro = {
                     "Usuário": st.session_state["user"],
                     "Bulto": st.session_state["bulto_numero"],
                     "SKU": sku,
                     "Categoria": st.session_state["categoria_selecionada"],
-                   "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 }
-            st.session_state["cadastros"].append(novo_cadastro)
-            st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state       ['categoria_selecionada']}'!")
-            st.session_state["peca_reset_count"] = st.session_state.get("peca_reset_count", 0) + 1
-            st.session_state["ultimo_sku"] = sku
-            st.rerun()
-
+                st.session_state["cadastros"].append(novo_cadastro)
+                st.success(f"Peça '{sku}' cadastrada no Bulto {st.session_state['bulto_numero']} na categoria '{st.session_state['categoria_selecionada']}'!")
+                st.session_state["peca_reset_count"] = st.session_state.get("peca_reset_count", 0) + 1
+                st.session_state["ultimo_sku"] = sku
+                st.rerun()
 
         with col2:
             if st.button("Finalizar Bulto"):
@@ -214,9 +174,11 @@ if selecao == "Cadastro Bulto":
                 st.session_state["peca_reset_count"] = 0
                 st.rerun()
 
+# Tabela de peças cadastradas
 elif selecao == "Tabela":
     st.markdown("<h1 style='color:black;'>Tabela de Peças Cadastradas</h1>", unsafe_allow_html=True)
-    if "cadastros" in st.session_state and st.session_state["cadastros"]:
+
+    if st.session_state["cadastros"]:
         df_cadastros = pd.DataFrame(st.session_state["cadastros"])
         st.dataframe(df_cadastros, use_container_width=True)
 
@@ -257,8 +219,7 @@ elif selecao == "Tabela":
         st.info("Nenhuma peça cadastrada até o momento.")
 
 # Rodapé
-st.markdown(
-    """
+st.markdown("""
     <style>
         .footer {
             position: fixed;
@@ -275,6 +236,4 @@ st.markdown(
     <div class="footer">
         Copyright © 2025 Direitos Autorais Desenvolvedor Rogério Ferreira
     </div>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
