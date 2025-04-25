@@ -205,9 +205,9 @@ elif selecao == "Tabela":
 
         if st.button("✉️ Enviar planilha para analista"):
             try:
-                remetente = "rogeriomartins1206@gmail.com"
-                senha = "zqcpbmisdghscjcv"
-                destinatario = "analista@empresa.com"
+                remetente = "automatistasidl@gmail.com"
+                senha = "ydlkjtswplqitwkf"
+                destinatario = "analista@idl.com"
 
                 msg = EmailMessage()
                 msg['Subject'] = 'Relatório de Cadastro de Bultos'
