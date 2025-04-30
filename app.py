@@ -209,6 +209,8 @@ if selecao == "Cadastro Bulto":
                     st.warning("⚠️ Nenhuma peça cadastrada neste bulto para envio.")
             else:
                 st.warning("⚠️ Nenhuma peça cadastrada até o momento.")    
+            # Remover cadastros do bulto finalizado
+            st.session_state["cadastros"] = [c for c in st.session_state["cadastros"] if c["Bulto"] != bulto_atual]
 
             st.success("Bulto finalizado com sucesso!")
             st.session_state["bulto_numero"] = ""
