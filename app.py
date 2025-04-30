@@ -175,11 +175,46 @@ if selecao == "Cadastro Bulto":
 
         st.markdown("---")  # linha de separação opcional
         if st.button("✅ Finalizar Bulto", use_container_width=True):
-           st.success("Bulto finalizado com sucesso!")
-           st.session_state["bulto_numero"] = ""
-           st.session_state["bulto_cadastrado"] = False
-           st.session_state["peca_reset_count"] = 0
-           st.rerun()
+            if st.session_state["cadastros"]:
+                # Filtrar apenas os cadastros do bulto atual
+                bulto_atual = st.session_state["bulto_numero"]
+                df_cadastros = pd.DataFrame([c for c in st.session_state["cadastros"] if c["Bulto"] == bulto_atual])
+            
+                if not df_cadastros.empty:
+                    nome_arquivo = f"cadastro_bulto_{bulto_atual}_{datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%d-%m-%Y_%H-%M-%S')}.xlsx"
+                    output = io.BytesIO()
+                    df_cadastros.to_excel(output, index=False, engine='xlsxwriter')
+                    dados_excel = output.getvalue()
+
+                    try:
+                        remetente = "automatistasidl@gmail.com"
+                        senha = "ydlkjtswplqitwkf"
+                        destinatario = "analista@idl.com"
+
+                        msg = EmailMessage()
+                        msg['Subject'] = f'Relatório - Bulto {bulto_atual}'
+                        msg['From'] = remetente
+                        msg['To'] = destinatario
+                        msg.set_content(f'Segue em anexo a planilha do bulto finalizado: {bulto_atual}')
+                        msg.add_attachment(dados_excel, maintype='application', subtype='vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename=nome_arquivo)
+
+                        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                            smtp.login(remetente, senha)
+                            smtp.send_message(msg)
+
+                        st.success("✅ Bulto finalizado e enviado com sucesso para o analista!")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao enviar planilha: {e}")
+                else:
+                    st.warning("⚠️ Nenhuma peça cadastrada neste bulto para envio.")
+            else:
+                st.warning("⚠️ Nenhuma peça cadastrada até o momento.")    
+
+            st.success("Bulto finalizado com sucesso!")
+            st.session_state["bulto_numero"] = ""
+            st.session_state["bulto_cadastrado"] = False
+            st.session_state["peca_reset_count"] = 0
+            st.rerun()
 
 
 # Tabela de peças cadastradas
