@@ -11,6 +11,7 @@ import smtplib
 from email.message import EmailMessage
 from datetime import datetime
 import pytz
+
 def hora_brasil():
     fuso_brasil = pytz.timezone('America/Sao_Paulo')
     return datetime.now(fuso_brasil).strftime("%d/%m/%Y %H:%M:%S")
@@ -24,7 +25,7 @@ st.set_page_config(layout="wide")
 
 # Página de boas-vindas
 if "inicio" not in st.session_state:
-    st.session_state["inicio"] = False
+    st.session_state["inicio"] = False      
 
 if not st.session_state["inicio"]:
     st.title("SISTEMA DE CONTROLE DE BACKSTOCK")
@@ -149,6 +150,11 @@ if selecao == "Cadastro Bulto":
                     st.success(f"Categoria '{categoria}' selecionada!")
 
         sku = st.text_input("Digite SKU para este bulto:", key=unique_key)
+        st_javascript("""                      
+                      setTimeout(() => {const inputs = window.parent.document.querySelectorAll('input[type="text"]');
+                      if (inputs.length > 0) {
+                        inputs[inputs.length - 1].focus();}}, 100);
+                    """)
         if "ultimo_sku" not in st.session_state:
             st.session_state["ultimo_sku"] = ""
 
